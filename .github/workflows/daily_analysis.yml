@@ -29,47 +29,18 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          # 必须保留的雅虎财经补丁
+          # 🟢 唯一保留的补丁：确保能读到美股数据
           pip install yfinance pandas_datareader requests urllib3 --upgrade --no-cache-dir
-
-      # 👇👇👇【核心修复】用 Python 脚本强行修改源代码 👇👇👇
-      # 这是一个“外科手术”脚本，专门治 429 限流
-      - name: 🐢 Force Serial Processing (Limit Workers to 1)
-        run: |
-          python -c "
-          import os
-          print('正在执行代码修复手术...')
-          for root, dirs, files in os.walk('.'):
-              for file in files:
-                  if file.endswith('.py'):
-                      path = os.path.join(root, file)
-                      with open(path, 'r', encoding='utf-8') as f:
-                          content = f.read()
-                      
-                      # 1. 强行把 3并发 改成 1并发 (排队模式)
-                      new_content = content.replace('max_workers=3', 'max_workers=1')
-                      new_content = new_content.replace('max_workers = 3', 'max_workers = 1')
-                      
-                      # 2. 强行把旧模型替换成 1.5-flash
-                      new_content = new_content.replace('gemini-3-flash-preview', 'gemini-1.5-flash')
-                      new_content = new_content.replace('gemini-2.5-flash', 'gemini-1.5-flash')
-                      
-                      if new_content != content:
-                          print(f'已修复文件: {path}')
-                          with open(path, 'w', encoding='utf-8') as f:
-                              f.write(new_content)
-          print('手术完成！现在是单线程排队模式，绝对稳！')
-          "
 
       - name: Run analysis
         env:
+          # 核心密钥
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           STOCK_LIST: ${{ secrets.STOCK_LIST }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
           
-          # 环境变量双重锁定
-          LLM_MODEL: gemini-1.5-flash
+          # 兼容配置
           GOOGLE_API_KEY: ${{ secrets.LLM_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.LLM_API_KEY }}
           
