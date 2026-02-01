@@ -6,7 +6,7 @@ on:
       - master
       - main
   schedule:
-    # 每天 5 次运行
+    # 每天 5 次
     - cron: '0 0 * * *'
     - cron: '0 5 * * *'
     - cron: '0 10 * * *'
@@ -29,19 +29,24 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          # 强制安装美股数据包
+          # 必装：美股数据包
           pip install yfinance pandas_datareader requests urllib3 --upgrade --no-cache-dir
 
-      # 👇👇👇【这里是重点】手术步骤 👇👇👇
-      - name: 🔧 Force Replace Model Name (Magic Fix)
+      # 👇👇👇【第一刀】强行换模型 (确保是 1.5-flash) 👇👇👇
+      - name: 🔧 Force Model to 1.5-Flash
         run: |
-          echo "正在执行代码手术..."
-          # 找到所有文件里的 "gemini-3-flash-preview"，强行替换成 "gemini-1.5-flash"
           grep -rl "gemini-3-flash-preview" . | xargs sed -i 's/gemini-3-flash-preview/gemini-1.5-flash/g' || true
-          
-          # 以防万一，把备选模型也统一成 1.5-flash
           grep -rl "gemini-2.5-flash" . | xargs sed -i 's/gemini-2.5-flash/gemini-1.5-flash/g' || true
-          echo "代码修改完成！现在所有模型都被强制锁定为 gemini-1.5-flash"
+
+      # 👇👇👇【第二刀】强行降速 (把并发数从 3 改成 1) 👇👇👇
+      # 这是解决 429 限流的最终杀手锏！排队一个一个做，绝对不堵车。
+      - name: 🐢 Limit Concurrency to 1 (Fix 429 Error)
+        run: |
+          echo "正在把并发数从 3 降到 1..."
+          # 找到代码里所有设置并发的地方，统统改成 1
+          find . -type f -name "*.py" -print0 | xargs -0 sed -i 's/max_workers=3/max_workers=1/g'
+          find . -type f -name "*.py" -print0 | xargs -0 sed -i 's/max_workers = 3/max_workers = 1/g'
+          echo "降速完成！现在是单线程排队模式。"
 
       - name: Run analysis
         env:
@@ -50,7 +55,7 @@ jobs:
           STOCK_LIST: ${{ secrets.STOCK_LIST }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
           
-          # 双重保险：环境变量也设为 1.5-flash
+          # 环境变量双重锁定
           LLM_MODEL: gemini-1.5-flash
           GOOGLE_API_KEY: ${{ secrets.LLM_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.LLM_API_KEY }}
