@@ -6,7 +6,7 @@ on:
       - master
       - main
   schedule:
-    # 每天跑5次的时间表
+    # 每天 5 次运行计划
     - cron: '0 0 * * *'
     - cron: '0 5 * * *'
     - cron: '0 10 * * *'
@@ -31,9 +31,14 @@ jobs:
 
       - name: Run analysis
         env:
-          # 这里就是把你的密码强行塞给机器人
+          # --- 核心配置 ---
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           STOCK_LIST: ${{ secrets.STOCK_LIST }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+          
+          # --- 👇 暴力兼容修复：不管它查哪个名字，都把密码塞给它 ---
+          GOOGLE_API_KEY: ${{ secrets.LLM_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.LLM_API_KEY }}
+          
         run: python main.py
