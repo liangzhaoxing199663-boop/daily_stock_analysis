@@ -6,13 +6,13 @@ on:
       - master
       - main
   schedule:
-    # --- 这里是你要求的每天5次运行时间 ---
-    - cron: '0 0 * * *'   # 早上 08:00 (美股收盘)
-    - cron: '0 5 * * *'   # 中午 13:00 (港股午盘)
-    - cron: '0 10 * * *'  # 傍晚 18:00 (美股盘前)
-    - cron: '30 12 * * *' # 晚上 20:30 (美股开盘前)
-    - cron: '0 16 * * *'  # 凌晨 00:00 (美股盘中)
-  workflow_dispatch:      # 允许手动按钮运行
+    # 每天跑5次的时间表
+    - cron: '0 0 * * *'
+    - cron: '0 5 * * *'
+    - cron: '0 10 * * *'
+    - cron: '30 12 * * *'
+    - cron: '0 16 * * *'
+  workflow_dispatch:
 
 jobs:
   daily_analysis:
@@ -27,17 +27,13 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Run analysis
         env:
-          # --- 关键修复：确保这里对应你的 Secret 名字 ---
+          # 这里就是把你的密码强行塞给机器人
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          stock_list: ${{ secrets.STOCK_LIST }}
+          STOCK_LIST: ${{ secrets.STOCK_LIST }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-          # 兼容旧版本变量名
-          GOOGLE_API_KEY: ${{ secrets.LLM_API_KEY }}
-        run: |
-          python main.py
+        run: python main.py
