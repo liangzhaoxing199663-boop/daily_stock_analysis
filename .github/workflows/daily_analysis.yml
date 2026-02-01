@@ -6,7 +6,7 @@ on:
       - master
       - main
   schedule:
-    # 每天5次定时运行
+    # 每天 5 次运行
     - cron: '0 0 * * *'
     - cron: '0 5 * * *'
     - cron: '0 10 * * *'
@@ -29,12 +29,20 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          # 👇 关键修改：强制升级雅虎财经接口，确保美股数据能通
-          pip install --upgrade yfinance
+          
+          # 👇【这里是重点】我帮你加了三重保险
+          # 1. 强制安装最新版雅虎财经 (主攻美股)
+          pip install yfinance --upgrade --no-cache-dir
+          
+          # 2. 安装数据读取助手 (辅助雅虎)
+          pip install pandas_datareader
+          
+          # 3. 升级底层网络库 (防止连接报错)
+          pip install --upgrade urllib3 requests
 
       - name: Run analysis
         env:
-          # 配置密钥
+          # 密钥配置
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           STOCK_LIST: ${{ secrets.STOCK_LIST }}
