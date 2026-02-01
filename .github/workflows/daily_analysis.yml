@@ -6,7 +6,7 @@ on:
       - master
       - main
   schedule:
-    # 每天 5 次运行计划
+    # 每天5次定时运行
     - cron: '0 0 * * *'
     - cron: '0 5 * * *'
     - cron: '0 10 * * *'
@@ -27,17 +27,20 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          # 👇 关键修改：强制升级雅虎财经接口，确保美股数据能通
+          pip install --upgrade yfinance
 
       - name: Run analysis
         env:
-          # --- 核心配置 ---
+          # 配置密钥
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           STOCK_LIST: ${{ secrets.STOCK_LIST }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
           
-          # --- 👇 暴力兼容修复：不管它查哪个名字，都把密码塞给它 ---
+          # 兼容性配置
           GOOGLE_API_KEY: ${{ secrets.LLM_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.LLM_API_KEY }}
           
